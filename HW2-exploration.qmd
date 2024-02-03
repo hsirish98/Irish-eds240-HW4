@@ -1,0 +1,151 @@
+---
+title: "Homework Assignment #2"
+subtitle: "Part II"
+author: "Hannah Irish"
+date: 2024-02-03
+toc: true
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+## HW 2a 
+
+## Load Packages
+
+```{r}
+
+library(tidyverse)
+library(tidyr)
+library(sf)
+```
+
+## Load data
+
+```{r}
+
+energy_ins <- readxl::read_xlsx(here::here("data/HC_11.1.xlsx"), skip=4) %>%
+  janitor::clean_names()
+
+colnames(energy_ins) <- c("survey", "total_us", "any_insecurity", "food_medicine", "unhealthy_temp", "disconnect_stop", "unable_heat", "unable_ac")
+
+energy_ins_total <- energy_ins %>% 
+  pivot_longer(c(2:ncol(energy_ins)), 
+               names_to = "indicator",
+               values_to = "homes_mil")
+
+
+```
+
+Create sub datasets for different indicators
+
+```{r}
+
+census_region <- energy_ins[2:17, ] 
+
+climate_region <- energy_ins[18:28, ] 
+ 
+unit_type <- energy_ins[29:34, ]
+ 
+year_constructed <- energy_ins[35:44, ] 
+
+heat_fuel <- energy_ins[45:52, ] 
+
+heat_equip <- energy_ins[53:63, ] 
+
+ac <- energy_ins[64:73, ] 
+
+insulation <- energy_ins[74:82, ] 
+
+members_hh <- energy_ins[83:89, ] 
+
+income_2020 <- energy_ins[90:98, ]
+
+```
+
+Exploratory Graphs
+
+```{r}
+
+census_general <- c("Northeast", "Midwest", "South", "West")
+
+general_only <- census_region %>% 
+  filter(survey %in% census_general) %>% 
+  pivot_longer(cols = 3:ncol(census_region), names_to = "indicator", values_to = "n_homes") %>% 
+  rename(general_region = survey)
+
+specific_only <- census_region %>% 
+  filter(!survey %in% census_general) %>% 
+  drop_na() %>% 
+  pivot_longer(cols = 3:ncol(census_region), names_to = "indicator", values_to = "n_homes") %>% 
+  rename(specific_region = survey) %>% 
+  mutate(general_region = case_when(
+    specific_region %in% c("New England", "Middle Atlantic") ~ "Northeast",
+    specific_region %in% c("East North Central", "West North Central") ~ "Midwest",
+    specific_region %in% c("South Atlantic", "East South Central", "West South Central") ~ "South",
+    specific_region %in% c("Mountain North", "Mountain South", "Pacific") ~ "West"
+  ))
+
+census_combined <- left_join(specific_only, general_only) %>% 
+  mutate(n_homes = as.numeric(n_homes),
+         total_us = as.numeric(total_us),
+          pct = (n_homes/total_us)) %>% 
+  filter(specific_region != "Mountain")
+
+
+census_combined %>%  
+  filter(specific_region == "South Atlantic") %>% 
+  ggplot() +
+  geom_col(aes(x=indicator, y=pct)) +
+  labs(y= "Percent of Homes Reporting", x="Energy Insecurity Indicator", title = "Homes in the South Atlantic Showing Energy Insecurity")+
+  coord_flip() +
+  theme_minimal()
+
+
+
+```
+
+```{r}
+
+
+
+heat_fuel_clean <- heat_fuel %>% 
+  drop_na() %>% 
+  pivot_longer(cols=3:ncol(heat_fuel), 
+               names_to = "indicator",
+               values_to = "n_homes") %>% 
+  mutate(n_homes = as.numeric(n_homes),
+         total_us = as.numeric(total_us),
+          pct = (n_homes/total_us)) %>% 
+  drop_na()
+
+any_ins_heat <- heat_fuel_clean %>% 
+  filter(indicator == "any_insecurity")
+
+ggplot(any_ins_heat, aes(x=survey, y=pct, fill=survey)) +
+  geom_col(show.legend = FALSE) +
+  labs(x="Main Heating Equipment", "Percent of Homes Reporting Insecurity", title="Percent of Home Reporting Any Energy Insecurity by Main Heating Fuel")+
+  theme_minimal() 
+
+
+
+```
+
+```{r}
+
+  ggplot(heat_fuel_clean, aes(x=survey, y=pct, color=survey)) +
+    facet_wrap(~indicator)+
+  geom_point(show.legend=FALSE) + 
+  geom_segment( aes(x=survey, xend=survey, y=0, yend=pct), show.legend=FALSE) +
+    coord_flip()
+```
+
+## Homework 2b
+
+1.  I have learned that there are a lot of different things that have been measured with respect to energy insecurity and I'll need to narrow down what I want to focus on. I also learned that it's in a really inconvenient format that required a lot of really specific wrangling. I think the most interesting thing will maybe to do some meta-analysis and kind of look at what is a strongest indicator of energy insecurity across different things measured (homes, demographics, etc.) but I can't figure out how to keep these things all in the dataframe in a way that works. I will need to dream up something to explore that goes beyond basic box plots and get really creative with what I want to show. It might be nice to include census data and do a map. If I can't really think up an interesting enough visualization/story to investigate, I might need to broaden my data to the rest of the residential energy consumption survey (RECS).
+
+2.  I wanted to know what makes certain households more vulnerable to energy insecurity as we move into the clean energy transition/heightened climate change. I need to figure out some way that I can express strength of correlation of an indicator, but that might just not be possible with the way the data is reported here. Perhaps I should just focus in general on trends in natural gas vs. electricity and broaden to the rest of the RECS and I can look at consumption trends and other things? It might be interesting -- in that case I will need to read in more RECS data and do a lot more wrangling and think about how I can investigate these vulnerabilities in a way that is conducive to the Assignment 4 guidelines.
+
+    I think it might be important to include some sort of spatial representation of data because if I have census tracts, which I think determines a lot of house physical characteristic trends, it will be way easier to visualize on a map instead of having to compare data labels. I think between now and homework 3 I really need to look at all of RECS and really pare down what questions I want to answer beyond my cursory first few thoughts so that I can really engage in the practice of appropriate representation. Even just looking at how much natural gas is consumed across the US is interesting for how difficult it'll be to do an energy transition, but I really need to devise good questions. I think I might do some media analysis of biggest concerns with electrification on the internet so I can maybe use the survey data to address it.
+
+3.  One challenge is that the RECS xlsx files are really not designed for tidy data and it takes a lot of work to get them in a usable form. Visually, unless I pull in some more data, I'm having a hard time dreaming up an actually interesting trend that I can portray with the way my data was collected. However, if I look into more examples of representations of survey data, maybe I can put together a good graphic that would be good for the general public. I think it's the report ones that are more challenging in my thoughts since I don't have summary statistics really available with what the RECS data is.
