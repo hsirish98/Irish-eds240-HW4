@@ -1,15 +1,13 @@
 ---
-title: "Homework Assignment #2"
-subtitle: "Part II"
+title: "HW #2 Data Exploration for Energy Insecurity"
 author: "Hannah Irish"
-date: 2024-02-03
-toc: true
-format: html
-editor_options: 
-  chunk_output_type: console
+date: 2024-02-08
+format:
+  html:
+    embed-resources: true
 ---
 
-## HW 2a 
+## HW 2a
 
 ## Load Packages
 
@@ -18,6 +16,12 @@ editor_options:
 library(tidyverse)
 library(tidyr)
 library(sf)
+library(ggimage)
+library(geomtextpath)
+library(stringr)
+library(showtext)
+library(cowplot)
+library(MetBrewer)
 ```
 
 ## Load data
@@ -149,3 +153,82 @@ ggplot(any_ins_heat, aes(x=survey, y=pct, fill=survey)) +
     I think it might be important to include some sort of spatial representation of data because if I have census tracts, which I think determines a lot of house physical characteristic trends, it will be way easier to visualize on a map instead of having to compare data labels. I think between now and homework 3 I really need to look at all of RECS and really pare down what questions I want to answer beyond my cursory first few thoughts so that I can really engage in the practice of appropriate representation. Even just looking at how much natural gas is consumed across the US is interesting for how difficult it'll be to do an energy transition, but I really need to devise good questions. I think I might do some media analysis of biggest concerns with electrification on the internet so I can maybe use the survey data to address it.
 
 3.  One challenge is that the RECS xlsx files are really not designed for tidy data and it takes a lot of work to get them in a usable form. Visually, unless I pull in some more data, I'm having a hard time dreaming up an actually interesting trend that I can portray with the way my data was collected. However, if I look into more examples of representations of survey data, maybe I can put together a good graphic that would be good for the general public. I think it's the report ones that are more challenging in my thoughts since I don't have summary statistics really available with what the RECS data is.
+
+```{r}
+
+library(plotly)
+
+##sunburst
+
+census_sun <- census_combined %>% 
+  filter(indicator == "any_insecurity") %>% 
+  group_by(general_region) %>% 
+  summarize(total_homes = sum(total_us)) 
+
+census_spec <- census_combined %>% 
+  filter(indicator == "any_insecurity") %>% 
+  select(total_us, specific_region, general_region)
+  
+```
+
+```{r}
+library(showtext)
+
+font_add_google(name = "Inter", family = "inter")
+
+font_add_google(name = "Barlow", family="barlow")
+
+showtext_auto()
+
+census_any <- census_combined %>% 
+  filter(indicator == "any_insecurity") 
+
+viridis_palette <- viridis::viridis_pal(option = "muted")(10)
+
+viridis_palette <- viridis_palette[-c(5,2)]
+
+census_any$label_position <- (census_any$pct / 1.5) # Adjust this formula based on your specific needs
+
+
+
+ggplot(data=census_any, aes(x=fct_reorder(specific_region,general_region), y=pct, fill=general_region))+
+  geom_bar(stat="identity") +
+  geom_text(aes(label=scales::percent(pct, accuracy = 1), y=label_position), size = 6, color="white", face= "bold")+
+  labs(x="", y="", 
+       title="Percent of Homes Experiencing Energy Insecurity (2020)",
+       size = "",
+       subtitle = "By Census Region, General & Specific",
+       fill = "General Census Region")+
+  scale_fill_manual(values = viridis_palette) +
+  theme_void() +
+  theme(
+    axis.text =  element_blank(),
+     plot.title = element_text(face="bold",
+                              family = "inter",
+                              size = 25, 
+                              hjust=0.2,
+                              vjust=-5),
+    plot.subtitle = element_text(face = "italic",
+                                 family="inter",
+                                 size = 20,
+                                 vjust = -6,
+                                 hjust=0.2),
+    legend.title = element_text(face = "bold",
+                                 family="inter",
+                                 size = 15),
+    legend.text = element_text(family="inter",
+                                 size = 15),
+  
+  )  +
+  geom_label(data=census_any,
+  aes(x = fct_reorder(specific_region, general_region), y = pct, label = specific_region),
+  position = position_stack(vjust = 1.35), # Adjust 'vjust' for label positioning
+  size = 6,
+  fill = "grey50", # Dark gray background for the labels
+  colour = "white",
+  family="inter"# White text color
+) +
+  coord_polar(start=0)
+
+
+```
