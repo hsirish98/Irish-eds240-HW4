@@ -4,4 +4,4 @@
 .Ruserdata
 
 # ingore any folder named "data"
-/data
+/data*

@@ -1,0 +1,158 @@
+---
+title: "HW3-drafting-viz"
+author: Hannah Irish
+editor: visual
+format:
+  html:
+    embed-resources: true
+editor_options: 
+  chunk_output_type: console
+---
+
+Load packages and fonts
+
+```{r}
+## Include necessary packages
+library(showtext)
+library(tidyverse)
+
+##Add typeface "Inter" from Google Fonts
+font_add_google(name = "Inter", family = "inter")
+##Add typeface "Barlow" from Google Fonts
+font_add_google(name = "Barlow", family="barlow")
+
+## enable use of Google Fonts
+showtext_auto()
+```
+
+## HW 3: Preparing For Final Assignment
+
+1.  I plan to pursue option #2 for HW4, the infographic option.
+2.  My overarching question is how U.S. homes' census region contributes to their energy insecurity in 2020. My sub-questions are a) How many homes are in each region, b) Which census regions are most prone to energy insecurity, and c) Which energy insecurity indicators dominate each region
+3.  The energy insecurity section of the Residential Energy Consumption Survey (RECS) from the U.S. Energy Information Administration (EIA) has many demographic/household characteristics. They show the number of households in the U.S. that report each energy indicator (any indicator, forgoing food/medicine, leaving home at unhealthy temperature, unable to use AC, unable to use heat, receiving a disconnect or delivery stop notice) by each of these factors. I will specifically utilize the census data and look at location-specific energy insecurity survey reports. This is all for 2020, the most recent survey year.
+
+## Hand-Drawn Plan
+
+I did this on my iPad but it is hand drawn!
+
+First, a map showing the different census regions with their total households to give context to the data:
+
+```{r}
+
+#| eval: true
+#| echo: false
+#| fig-align: "center"
+#| out-width: "100%"
+#| fig-alt: "Drawing of the United States with colors labeling census regions and each region labelled with its name and the number of homes it contains. The South Atlantic region (Florida, Georgia, South Carolina, North Carolina, Virginia, West Virginia, Maryland) has the most households while New England (Connecticut, Rhode Island, Massachussetts, New Hampshire, Vermont, and Maine) has the fewest households "
+knitr::include_graphics(here::here("images/viz1_graph.png"))
+```
+
+Second, a polar bar graph showing the percent of homes in each region experiencing any energy insecurity:
+
+```{r}
+
+#| eval: true
+#| echo: false
+#| fig-align: "center"
+#| out-width: "100%"
+#| fig-alt: "A polar bar chart/pie graph showing the percent of homes in each census region experiencing energy insecurity. Pacific has the most, whereas the Middle Atlantic has the least"
+knitr::include_graphics(here::here("images/viz2_polarbar.png"))
+
+```
+
+Finally, a collection of radar graphs showing the relative dominance of each energy indicator in each region
+
+```{r}
+
+#| eval: true
+#| echo: false
+#| fig-align: "center"
+#| out-width: "100%"
+#| fig-alt: "4 radar graphs showing each general census region with the specific regions highlighted, showing which energy insecurity indicators are most prevalent in each region "
+knitr::include_graphics(here::here("images/viz3_radars.png"))
+```
+
+## Read in data
+
+```{r}
+
+##read in census_data that was wrangled for HW2 and save it as dataframe "census_nrg" 
+census_nrg <- read_csv(here::here("data_intermediate/census_data.csv"))
+
+
+##create a color palette for each of the specific census regions
+
+region_palette <- c("Pacific" = "tan", "Mountain South" = "orange2", "Mountain North" = "orange4",  "East North Central" = "springgreen4", "West North Central" = "palegreen3", "New England" = 'tomato3', "Middle Atlantic" = "pink2", "South Atlantic" = "royalblue4", "East South Central" = "steelblue4", "West South Central" = "lightskyblue")
+```
+
+Map:
+
+```{r}
+
+
+```
+
+Bar plot
+
+```{r}
+
+
+census_any <- census_nrg %>% 
+  filter(indicator == "any_insecurity")
+  
+  
+specific_region_order <- c( "East North Central", "West North Central",  "Mountain North", "Mountain South", "Pacific" , "New England", "Middle Atlantic","South Atlantic" , "East South Central", "West South Central")
+
+
+census_any$specific_region <- factor(census_any$specific_region, levels = specific_region_order)
+
+viridis_palette <- viridis::viridis_pal(option = "muted")(10)
+
+viridis_palette <- viridis_palette[-c(5,2)]
+
+census_any$label_position <- (census_any$pct / 1.5) # Adjust this formula based on your specific needs
+
+
+
+ggplot(data=census_any, aes(x=specific_region, y=pct, fill=specific_region))+
+  geom_bar(stat="identity") +
+  geom_text(aes(label=scales::percent(pct, accuracy = 1), y=label_position), size = 6, color="white", ,face= "bold")+
+  labs(x="", y="", 
+       title="Percent of Homes Reporting ANY Energy Insecurity (2020)",
+       size = "",
+       subtitle = "By Census Region",
+       fill = "General Census Region")+
+  scale_fill_manual(values = region_palette) +
+  theme_void() +
+  theme(
+    axis.text =  element_blank(),
+     plot.title = element_text(face="bold",
+                              family = "inter",
+                              size = 25, 
+                              hjust=0.2,
+                              vjust=-5),
+    plot.subtitle = element_text(face = "italic",
+                                 family="inter",
+                                 size = 20,
+                                 vjust = -6,
+                                 hjust=0.2),
+    legend.title = element_text(face = "bold",
+                                 family="inter",
+                                 size = 15),
+    legend.text = element_text(family="inter",
+                                 size = 15),
+    legend.position = "none"
+  
+  )  +
+  geom_segment(aes(x = specific_region, y = pct, xend = specific_region, yend = pct+0.14), 
+               color = "black", size = 0.7)+
+  geom_label(data=census_any,
+  aes(x = specific_region, y = pct, label = specific_region),
+  position = position_stack(vjust = 1.5), # Adjust 'vjust' for label positioning
+  size = 6,
+  fill = "grey50", # Dark gray background for the labels
+  colour = "white",
+  family="inter"# White text color
+) +
+  coord_polar(start=0)
+```

@@ -16,12 +16,9 @@ format:
 library(tidyverse)
 library(tidyr)
 library(sf)
-library(ggimage)
-library(geomtextpath)
 library(stringr)
 library(showtext)
 library(cowplot)
-library(MetBrewer)
 ```
 
 ## Load data
@@ -104,6 +101,9 @@ census_combined %>%
   labs(y= "Percent of Homes Reporting", x="Energy Insecurity Indicator", title = "Homes in the South Atlantic Showing Energy Insecurity")+
   coord_flip() +
   theme_minimal()
+
+
+write.csv(census_combined, file = here::here("data_intermediate/census_data.csv"))
 
 
 
