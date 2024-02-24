@@ -9,6 +9,11 @@ editor_options:
   chunk_output_type: console
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+
+```
+
 Load packages and fonts
 
 ```{r}
@@ -16,6 +21,7 @@ Load packages and fonts
 library(showtext)
 library(tidyverse)
 library(sf)
+library(fmsb)
 
 ##Add typeface "Inter" from Google Fonts
 font_add_google(name = "Inter", family = "inter")
@@ -80,18 +86,29 @@ knitr::include_graphics(here::here("images/viz3_radars.png"))
 ##read in census_data that was wrangled for HW2 and save it as dataframe "census_nrg" 
 census_nrg <- read_csv(here::here("data_intermediate/census_data.csv"))
 
+##make new data frame that just has "any insecurity" aka the sum of all the specific indicators
 census_any <- census_nrg %>% 
   filter(indicator == "any_insecurity")
   
-  
-specific_region_order <- c( "East North Central", "West North Central", "Mountain", "Pacific","South Atlantic" , "East South Central", "West South Central" , "New England", "Middle Atlantic")
+##set order for the regions so I can keep the red and green ones apart later
+specific_region_order <- c( "East North Central", "West North Central", "Pacific", "Mountain","South Atlantic" , "East South Central", "West South Central" , "New England", "Middle Atlantic")
 
-
+##order the regions
 census_any$specific_region <- factor(census_any$specific_region, levels = specific_region_order)
 
-##create a color palette for each of the specific census regions
+##determine certain colors for each region so I only need to edit it here later
+color_pacific = "springgreen4"
+color_mountain = "#AFE1AF"
+color_wnc = "#FAC898"
+color_enc = "#FFA500"
+color_ne = '#D22B2B'
+color_ma = "#FAA0A0"
+color_sa = "#0F52BA"
+color_esc = "#6495ED"
+color_wsc ="#87CEEB"
 
-region_palette <- c("Pacific" = "springgreen4", "Mountain" = "#AFE1AF", "West North Central" = "#FAC898", "East North Central" = "#FFA500", "New England" = '#D22B2B', "Middle Atlantic" = "#FAA0A0", "South Atlantic" = "#0F52BA", "East South Central" = "#6495ED", "West South Central" = "#87CEEB")
+##create a color palette for each of the specific census regions
+region_palette <- c("Pacific" = color_pacific, "Mountain" = color_mountain, "West North Central" = color_wnc, "East North Central" = color_enc, "New England" = color_ne, "Middle Atlantic" = color_ma, "South Atlantic" = color_sa, "East South Central" = color_esc, "West South Central" = color_wsc)
 ```
 
 ## Map
@@ -137,12 +154,16 @@ mutate(specific_region = case_when(
   )) %>% 
   filter(!state_abbr %in% c("HI","AK", "PR", "VI")) 
 
+##prepare data for map -- each region and their number of homes
 n_homes_map <- census_nrg %>% 
   filter(indicator == "any_insecurity") %>% 
-  select(1,2)
+  select(specific_region, total_us)
 
+##join the number of homes with the spatial data
 states <- left_join(states, n_homes_map, by = "specific_region")
 
+
+##make label data frames that are just one state from each of the regions because I can't think of a better way to get them spatially specific right now
 west_lab <- states %>% 
   filter(state_abbr == "CA")
 
@@ -176,67 +197,77 @@ Plot map
 
 ```{r}
 
+##set a label size so it'll change for all of them
 size_label <- 5
 
-# Plotting
+# plot map
 ggplot(states) +
+  ##add states data and set the outline/"color" as black and the color inside as the specific region
   geom_sf(data = states, aes(fill = specific_region), color = "black", show.legend = FALSE) +
+  ##add each label and set its color and size/typeface specs, etc. 
   geom_sf_label(data = west_lab, aes(label = specific_region, color=specific_region),
                 size = size_label, 
                 fontface = "bold", 
-                color = "springgreen4", 
+                color = color_pacific, 
+                fill = "white",
+                hjust = 0.5,
+                show.legend = FALSE) +
+  geom_sf_label(data = west_lab, aes(label = specific_region, color=specific_region),
+                size = size_label, 
+                fontface = "bold", 
+                color = color_pacific, 
                 fill = "white",
                 hjust = 0.5,
                 show.legend = FALSE) +
   geom_sf_label(data = mount_lab, aes(label = specific_region, color=specific_region),
                 size = size_label, 
                 fontface = "bold", 
-                color = "#AFE1AF", 
+                color = color_mountain, 
                 fill = "white",
                 hjust = 1,
                 show.legend = FALSE) +
    geom_sf_label(data = wnc_lab, aes(label = specific_region, color=specific_region),
                 size = size_label, 
                 fontface = "bold", 
-                color = "#FAC898", 
+                color = color_wnc, 
                 fill = "white",
                 hjust = 0.9,
                 show.legend = FALSE) +
      geom_sf_label(data = enc_lab, aes(label = specific_region, color=specific_region),
                 size = size_label, 
                 fontface = "bold", 
-                color = "#FFA500", 
+                color = color_enc, 
                 fill = "white",
                 show.legend = FALSE) +
    geom_sf_label(data = wsc_lab, aes(label = specific_region, color=specific_region),
                 size = size_label, 
                 fontface = "bold", 
-                color = "#87CEEB", 
+                color = color_wsc, 
                 fill = "white",
                 show.legend = FALSE) +
     geom_sf_label(data = sa_lab, aes(label = specific_region, color=specific_region),
                 size = size_label, 
                 hjust = -0.3,
                 fontface = "bold", 
-                color = "#0F52BA", 
+                color = color_sa, 
                 fill = "white",
                 show.legend = FALSE) +
    geom_sf_label(data = esc_lab, aes(label = specific_region, color=specific_region),
                 size = size_label, 
                 fontface = "bold", 
-                color = "#6495ED", 
+                color = color_esc, 
                 fill = "white",
                 show.legend = FALSE) +
    geom_sf_label(data = ma_lab, aes(label = specific_region, color=specific_region),
                 size = size_label, 
                 fontface = "bold", 
-                color = "#FAA0A0", 
+                color = color_ma, 
                 fill = "white",
                 show.legend = FALSE) +
   geom_sf_label(data = ne_lab, aes(label = specific_region, color=specific_region),
                 size = size_label, 
                 fontface = "bold", 
-                color = "#D22B2B", 
+                color = color_ne, 
                 fill = "white",
                 show.legend = FALSE) +
   labs(title = "Location of Each US Census Region")+ 
@@ -252,10 +283,11 @@ ggplot(states) +
 
 ```
 
-Number of Homes
+Number of Homes Bar Plot
 
 ```{r}
 
+##make bar plot of the total number of homes in each region and fill by the region color
 ggplot(data=census_any, aes(x=specific_region, y=total_us, fill=specific_region))+
   geom_bar(stat="identity") +
   scale_fill_manual(values = region_palette) +
@@ -269,32 +301,29 @@ ggplot(data=census_any, aes(x=specific_region, y=total_us, fill=specific_region)
 
 ```
 
-Bar plot
+Polar bar plot
 
 ```{r}
 
+##make a position for the labels so I can move them around
+census_any$label_position <- (census_any$pct / 1.65) 
 
-
-
-viridis_palette <- viridis::viridis_pal(option = "muted")(10)
-
-viridis_palette <- viridis_palette[-c(5,2)]
-
-census_any$label_position <- (census_any$pct / 1.5) # Adjust this formula based on your specific needs
-
-
-
+##make a bar plot containing the percent of homes in each region experiencing any insecurity 
 ggplot(data=census_any, aes(x=specific_region, y=pct, fill=specific_region))+
   geom_bar(stat="identity") +
-  geom_text(aes(label=scales::percent(pct, accuracy = 1), y=label_position), size = 7, color="white", ,face= "bold")+
+  ##label the percentages
+  geom_text(aes(label=scales::percent(pct, accuracy = 1), y=label_position), size = 6, color="white", fontface = "bold")+
   labs(x="", y="", 
        title="Percent of Homes Reporting ANY Energy Insecurity (2020)",
        size = "",
        subtitle = "By Census Region",
        fill = "General Census Region")+
-  scale_fill_manual(values = region_palette) +
+  ##apply my custom color palette
+    scale_fill_manual(values = region_palette) +
+  ##remove gridlines, axes labels, etc with theme_void
   theme_void() +
   theme(
+    ##adjust appearance of all text
     axis.text =  element_blank(),
      plot.title = element_text(face="bold",
                               family = "inter",
@@ -314,6 +343,7 @@ ggplot(data=census_any, aes(x=specific_region, y=pct, fill=specific_region))+
     legend.position = "none"
   
   )  +
+  ##add lines from the labels to the chart segments
   geom_segment(aes(x = specific_region, y = pct, xend = specific_region, yend = pct+0.14), 
                color = "black", size = 0.7)+
   geom_label(data=census_any,
@@ -324,5 +354,210 @@ ggplot(data=census_any, aes(x=specific_region, y=pct, fill=specific_region))+
   colour = "white",
   family="inter"# White text color
 ) +
+  ##make a circle instead of traditional bar chart
   coord_polar(start=0)
 ```
+
+## Radar Chart
+
+Prep for radarcharts:
+
+```{r}
+
+##make vector of indicator names to use later
+indicator_vector <- c("Forgo Food/Medicine", "Leave Home at Unhealthy Temp", "Receive a Disconnect/Stop Delivery Notice", "Unable to Use Heat", "Unable to use AC")
+
+
+##find the average pct of homes experiencing each insecurity and make a data frame suitable for a radar plot
+avg_all <- census_nrg %>% 
+  group_by(indicator) %>% 
+  summarize(pct = mean(pct)) %>% 
+  filter(indicator != "any_insecurity") %>% 
+  pivot_wider(names_from = "indicator", values_from = "pct") %>% 
+  select(food_medicine, unhealthy_temp, disconnect_stop, unable_heat, unable_ac)
+
+##set the rowname to identify which is the average later
+row.names(avg_all) = "average"
+
+##choose the maximum amount of homes to show scale for the plots
+max_scale_n = 0.35
+
+
+
+
+```
+
+Northeast Radar Chart
+
+```{r}
+
+##make radar data for the northeast
+radar_northeast <- census_nrg %>% 
+  filter(general_region == "Northeast") %>% 
+  filter(indicator != "any_insecurity") %>% 
+  select(pct, indicator, specific_region) %>% 
+  pivot_wider(values_from = "pct", names_from = "indicator", id_cols = "specific_region") %>% 
+  select(-specific_region) 
+
+##set row names to specific regions
+row.names(radar_northeast) = c("New England", "Middle Atlantic")
+ 
+##bind with the min and max values and average to plot
+radar_northeast <- rbind(rep(max_scale_n, 6), rep(0,6), avg_all, radar_northeast)
+
+
+##make northeast radar plot
+radarchart(radar_northeast, 
+           pcol =c("gray50",color_ne,color_ma), 
+           pfcol = c(scales::alpha(c("gray50",color_ne,color_ma), 0.2)),  
+            vlabels=indicator_vector)
+  
+
+```
+
+Midwest Radar Chart
+
+```{r}
+
+
+##repeat above chunk exactly but for midwest:
+
+
+radar_midwest <- census_nrg %>% 
+  filter(general_region == "Midwest") %>% 
+  filter(indicator != "any_insecurity") %>% 
+  select(pct, indicator, specific_region) %>% 
+  pivot_wider(values_from = "pct", names_from = "indicator", id_cols = "specific_region") %>% 
+  select(-specific_region) 
+
+row.names(radar_midwest) = c("East North Central", "West North Central")
+ 
+radar_midwest <- rbind(rep(max_scale_n, 6), rep(0,6), avg_all, radar_midwest)
+
+radarchart(radar_midwest, 
+           pcol =c("gray50",color_enc,color_wnc), 
+           pfcol = c(scales::alpha(c("gray50",color_enc,color_wnc), 0.2)),  
+            vlabels=indicator_vector)
+  
+```
+
+West Radar Chart
+
+```{r}
+
+## repeat above exactly except for West
+radar_west <- census_nrg %>% 
+  filter(general_region == "West") %>% 
+  filter(indicator != "any_insecurity") %>% 
+  select(pct, indicator, specific_region) %>% 
+  pivot_wider(values_from = "pct", names_from = "indicator", id_cols = "specific_region") %>% 
+  select(-specific_region) 
+
+row.names(radar_west) = c("Mountain", "Pacific")
+ 
+radar_west <- rbind(rep(max_scale_n, 6), rep(0,6), avg_all, radar_west)
+
+radarchart(radar_west, 
+           pcol =c("gray50",color_mountain,color_pacific), 
+           pfcol = c(scales::alpha(c("gray50",color_mountain,color_pacific), 0.2)),  
+            vlabels=indicator_vector)
+```
+
+South Radar Chart
+
+```{r}
+
+
+##repeat above exactly but for south
+radar_south <- census_nrg %>% 
+  filter(general_region == "South") %>% 
+  filter(indicator != "any_insecurity") %>% 
+  select(pct, indicator, specific_region) %>% 
+  pivot_wider(values_from = "pct", names_from = "indicator", id_cols = "specific_region") %>% 
+  select(-specific_region)
+
+row.names(radar_south) = c("South Atlantic", "East South Central", "West South Central")
+ 
+radar_south <- rbind(rep(max_scale_n, 6), rep(0,6), avg_all, radar_south)
+
+radarchart(radar_south, 
+           pcol =c("gray50",color_sa,color_esc, color_wsc), 
+           pfcol = c(scales::alpha(c("gray50",color_sa,color_esc, color_wsc), 0.2)),  
+            vlabels=indicator_vector)
+
+```
+
+Radar Overall
+
+```{r}
+
+##make data frame summing up only the food/medicine category
+census_all_fm <- census_nrg %>% 
+  filter(indicator == "food_medicine") %>% 
+  group_by(specific_region) %>% 
+    summarise(across(c(total_us, n_homes), sum, na.rm = TRUE))
+
+##calculate percent of homes with food/medicine insecurity
+all_fm <- sum(census_all_fm$n_homes)/sum(census_all_fm$total_us)
+
+
+##make data frame summing up only the unhealthy temp category
+census_all_temp <- census_nrg %>% 
+  filter(indicator == "unhealthy_temp") %>% 
+  group_by(specific_region) %>% 
+    summarise(across(c(total_us, n_homes), sum, na.rm = TRUE))
+
+##calculate percent of homes with unhealthy temp insecurity
+all_temp <- sum(census_all_temp$n_homes)/sum(census_all_temp$total_us)
+
+##make data frame summing up only the disconnect/stop category
+census_all_stop <- census_nrg %>% 
+  filter(indicator == "disconnect_stop") %>% 
+  group_by(specific_region) %>% 
+    summarise(across(c(total_us, n_homes), sum, na.rm = TRUE))
+
+##calculate percent of homes with disconnect/stopinsecurity
+all_stop <- sum(census_all_stop$n_homes)/sum(census_all_stop$total_us)
+
+##make data frame summing up only the unable to heat category
+census_all_heat<- census_nrg %>% 
+  filter(indicator == "unable_heat") %>% 
+  group_by(specific_region) %>% 
+    summarise(across(c(total_us, n_homes), sum, na.rm = TRUE))
+
+##calculate percent of homes with unable to heat insecurity
+all_heat <- sum(census_all_heat$n_homes)/sum(census_all_heat$total_us)
+
+
+##make data frame summing up only the unable to cool category
+census_all_cool<- census_nrg %>% 
+  filter(indicator == "unable_heat") %>% 
+  group_by(specific_region) %>% 
+    summarise(across(c(total_us, n_homes), sum, na.rm = TRUE))
+
+##calculate percent of homes with unable to cool insecurity
+all_cool <- sum(census_all_cool$n_homes)/sum(census_all_cool$total_us)
+
+
+all_radar_data <- data.frame("food_medicine" = all_fm,
+                             "unhealthy_temp" = all_temp,
+                             "disconnect_stop" = all_stop,
+                             "unable_heat" = all_heat,
+                             "unable_cool" = all_cool
+                             )
+
+
+radar_all <- rbind(rep(max_scale_n, 5), rep(0,5), all_radar_data)
+
+radarchart(radar_all, 
+           pcol ="gray50", 
+           pfcol = c(scales::alpha("gray50", 0.2)),  
+            vlabels=indicator_vector)
+
+```
+
+## Reflection Questions
+
+1.  A challenge I've encountered is I was imagining doing a radar plot for each of the general census regions showing the specific region's percent of homes for each energy indicator, but they all pretty much have the same highest and lowest and there's not a lot of difference in the number region to region, so I feel like it doesn't show much. I also made one at the end that just shows which indicators are most prevalent as this is all I'm getting from the other anyway. Perhaps I could do facet wrapped dumbell plots instead of radars for each region to show their difference from the average? I'm not sure it's worth exploring with that little variation, however.
+2.  I used radarchart() from fmsb package to make my radars. This is new and I'm still figuring out really how to do the labelling because it's much less intuitive than ggplot. For now just getting them plotted and customized and rendered is my win. I will customize the look and theme, etc. going forward.
+3.  If my radar charts don't really work out, I feel like i need to figure something else that I can do, so if you are looking through this and think context needs to be provided by a certain figure, letting me know would be great. I'm going to try to include the number of homes on the map instead of in a bar plot but I need to figure out how to do that. I am thinking of my question from the context of if we electrify for the climate will we have issues, and I do have data on the main heating fuel used in each region, and the south which has the most energy insecurity does rely on electricity more than gas, so I could include that!
