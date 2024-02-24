@@ -90,17 +90,11 @@ specific_only <- census_region %>%
 census_combined <- left_join(specific_only, general_only) %>% 
   mutate(n_homes = as.numeric(n_homes),
          total_us = as.numeric(total_us),
-          pct = (n_homes/total_us)) %>% 
-  filter(specific_region != "Mountain")
+          pct = (n_homes/total_us)) %>%
+  filter(!specific_region %in% c("Mountain North", "Mountain South"))
 
-
-census_combined %>%  
-  filter(specific_region == "South Atlantic") %>% 
-  ggplot() +
-  geom_col(aes(x=indicator, y=pct)) +
-  labs(y= "Percent of Homes Reporting", x="Energy Insecurity Indicator", title = "Homes in the South Atlantic Showing Energy Insecurity")+
-  coord_flip() +
-  theme_minimal()
+census_combined <- census_combined %>%
+  mutate(general_region = ifelse(is.na(general_region), "West", general_region))
 
 
 write.csv(census_combined, file = here::here("data_intermediate/census_data.csv"))

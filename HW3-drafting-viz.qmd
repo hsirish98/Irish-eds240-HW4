@@ -15,6 +15,7 @@ Load packages and fonts
 ## Include necessary packages
 library(showtext)
 library(tidyverse)
+library(sf)
 
 ##Add typeface "Inter" from Google Fonts
 font_add_google(name = "Inter", family = "inter")
@@ -79,15 +80,191 @@ knitr::include_graphics(here::here("images/viz3_radars.png"))
 ##read in census_data that was wrangled for HW2 and save it as dataframe "census_nrg" 
 census_nrg <- read_csv(here::here("data_intermediate/census_data.csv"))
 
+census_any <- census_nrg %>% 
+  filter(indicator == "any_insecurity")
+  
+  
+specific_region_order <- c( "East North Central", "West North Central", "Mountain", "Pacific","South Atlantic" , "East South Central", "West South Central" , "New England", "Middle Atlantic")
+
+
+census_any$specific_region <- factor(census_any$specific_region, levels = specific_region_order)
 
 ##create a color palette for each of the specific census regions
 
-region_palette <- c("Pacific" = "tan", "Mountain South" = "orange2", "Mountain North" = "orange4",  "East North Central" = "springgreen4", "West North Central" = "palegreen3", "New England" = 'tomato3', "Middle Atlantic" = "pink2", "South Atlantic" = "royalblue4", "East South Central" = "steelblue4", "West South Central" = "lightskyblue")
+region_palette <- c("Pacific" = "springgreen4", "Mountain" = "#AFE1AF", "West North Central" = "#FAC898", "East North Central" = "#FFA500", "New England" = '#D22B2B', "Middle Atlantic" = "#FAA0A0", "South Atlantic" = "#0F52BA", "East South Central" = "#6495ED", "West South Central" = "#87CEEB")
 ```
 
-Map:
+## Map
+
+Read in Data and Prepare
 
 ```{r}
+
+
+##read in shapefile of the US states
+states <- read_sf(here::here("data/states/US_State_Boundaries.shp")) %>% 
+  ##put variable names in lowercase_snake
+  janitor::clean_names() %>% 
+  ## select only the fid, state abbreviation, and the geometry
+  select(1,4, 17) 
+
+states <- st_transform(states, crs = 3857)
+
+##make l ist of which abbreviations go with each census region
+west_list <- c("AK", "HI", "WA", "CA", "OR")
+mountain_list <- c("MT", "ID", "WY", "NV", "UT", "CO", "AZ", "NM")
+wnc_list <- c("ND", "SD", "NE", "KS", "MN", "IA", "MO")
+enc_list <- c("WI", "IL", "IN", "MI", "OH")
+new_england_list <- c("CT", "MA", "RI", "NH", "VT", "ME")
+mid_atlantic_list <- c("PA", "NJ", "NY")
+wsc_list <- c("TX", "OK", "AR", "LA")
+esc_list <- c("KY", "TN", "MS", "AL")
+s_atlantic_list <- c("DE", "DC", "MD", "NC", "VA", "WV", "GA", "FL", "SC")
+
+##mutate so that the region goes with the appropriate states
+states <- states %>% 
+mutate(specific_region = case_when(
+    state_abbr %in% west_list ~ "Pacific",
+    state_abbr %in% mountain_list ~ "Mountain",
+    state_abbr %in% wnc_list ~ "West North Central",
+    state_abbr %in% enc_list ~ "East North Central",
+    state_abbr %in% new_england_list ~ "New England",
+    state_abbr %in% mid_atlantic_list ~ "Middle Atlantic",
+    state_abbr %in% wsc_list ~ "West South Central",
+    state_abbr %in% esc_list ~ "East South Central",
+    state_abbr %in% s_atlantic_list ~ "South Atlantic",
+    TRUE ~ "Other"  # Default value if none of the conditions are met
+  )) %>% 
+  filter(!state_abbr %in% c("HI","AK", "PR", "VI")) 
+
+n_homes_map <- census_nrg %>% 
+  filter(indicator == "any_insecurity") %>% 
+  select(1,2)
+
+states <- left_join(states, n_homes_map, by = "specific_region")
+
+west_lab <- states %>% 
+  filter(state_abbr == "CA")
+
+mount_lab <- states %>% 
+  filter(state_abbr == "WY")
+
+wnc_lab <- states %>% 
+  filter(state_abbr == "IA")
+
+enc_lab <- states %>% 
+  filter(state_abbr == "MI")
+
+ma_lab <- states %>% 
+  filter(state_abbr == "NY")
+
+ne_lab <- states %>% 
+  filter(state_abbr == "ME")
+
+sa_lab <- states %>% 
+  filter(state_abbr == "NC")
+
+esc_lab <- states %>% 
+  filter(state_abbr == "AL")
+
+wsc_lab <- states %>% 
+  filter(state_abbr == "TX")
+
+```
+
+Plot map
+
+```{r}
+
+size_label <- 5
+
+# Plotting
+ggplot(states) +
+  geom_sf(data = states, aes(fill = specific_region), color = "black", show.legend = FALSE) +
+  geom_sf_label(data = west_lab, aes(label = specific_region, color=specific_region),
+                size = size_label, 
+                fontface = "bold", 
+                color = "springgreen4", 
+                fill = "white",
+                hjust = 0.5,
+                show.legend = FALSE) +
+  geom_sf_label(data = mount_lab, aes(label = specific_region, color=specific_region),
+                size = size_label, 
+                fontface = "bold", 
+                color = "#AFE1AF", 
+                fill = "white",
+                hjust = 1,
+                show.legend = FALSE) +
+   geom_sf_label(data = wnc_lab, aes(label = specific_region, color=specific_region),
+                size = size_label, 
+                fontface = "bold", 
+                color = "#FAC898", 
+                fill = "white",
+                hjust = 0.9,
+                show.legend = FALSE) +
+     geom_sf_label(data = enc_lab, aes(label = specific_region, color=specific_region),
+                size = size_label, 
+                fontface = "bold", 
+                color = "#FFA500", 
+                fill = "white",
+                show.legend = FALSE) +
+   geom_sf_label(data = wsc_lab, aes(label = specific_region, color=specific_region),
+                size = size_label, 
+                fontface = "bold", 
+                color = "#87CEEB", 
+                fill = "white",
+                show.legend = FALSE) +
+    geom_sf_label(data = sa_lab, aes(label = specific_region, color=specific_region),
+                size = size_label, 
+                hjust = -0.3,
+                fontface = "bold", 
+                color = "#0F52BA", 
+                fill = "white",
+                show.legend = FALSE) +
+   geom_sf_label(data = esc_lab, aes(label = specific_region, color=specific_region),
+                size = size_label, 
+                fontface = "bold", 
+                color = "#6495ED", 
+                fill = "white",
+                show.legend = FALSE) +
+   geom_sf_label(data = ma_lab, aes(label = specific_region, color=specific_region),
+                size = size_label, 
+                fontface = "bold", 
+                color = "#FAA0A0", 
+                fill = "white",
+                show.legend = FALSE) +
+  geom_sf_label(data = ne_lab, aes(label = specific_region, color=specific_region),
+                size = size_label, 
+                fontface = "bold", 
+                color = "#D22B2B", 
+                fill = "white",
+                show.legend = FALSE) +
+  labs(title = "Location of Each US Census Region")+ 
+   scale_fill_manual(values = region_palette) +
+   theme_void() +
+  theme(
+     plot.title = element_text(face="bold",
+                              family = "inter",
+                              size = 25,
+                              hjust = 0.2)
+     )
+
+
+```
+
+Number of Homes
+
+```{r}
+
+ggplot(data=census_any, aes(x=specific_region, y=total_us, fill=specific_region))+
+  geom_bar(stat="identity") +
+  scale_fill_manual(values = region_palette) +
+  coord_flip() +
+  theme_minimal() +
+  theme(
+    axis.title.x = element_blank(),
+    legend.position = "none"
+  )
 
 
 ```
@@ -97,14 +274,7 @@ Bar plot
 ```{r}
 
 
-census_any <- census_nrg %>% 
-  filter(indicator == "any_insecurity")
-  
-  
-specific_region_order <- c( "East North Central", "West North Central",  "Mountain North", "Mountain South", "Pacific" , "New England", "Middle Atlantic","South Atlantic" , "East South Central", "West South Central")
 
-
-census_any$specific_region <- factor(census_any$specific_region, levels = specific_region_order)
 
 viridis_palette <- viridis::viridis_pal(option = "muted")(10)
 
@@ -116,7 +286,7 @@ census_any$label_position <- (census_any$pct / 1.5) # Adjust this formula based 
 
 ggplot(data=census_any, aes(x=specific_region, y=pct, fill=specific_region))+
   geom_bar(stat="identity") +
-  geom_text(aes(label=scales::percent(pct, accuracy = 1), y=label_position), size = 6, color="white", ,face= "bold")+
+  geom_text(aes(label=scales::percent(pct, accuracy = 1), y=label_position), size = 7, color="white", ,face= "bold")+
   labs(x="", y="", 
        title="Percent of Homes Reporting ANY Energy Insecurity (2020)",
        size = "",
