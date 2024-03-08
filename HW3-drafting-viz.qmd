@@ -22,6 +22,8 @@ library(showtext)
 library(tidyverse)
 library(sf)
 library(fmsb)
+library(ggrepel)
+library(usmap)
 
 ##Add typeface "Inter" from Google Fonts
 font_add_google(name = "Inter", family = "inter")
@@ -98,7 +100,7 @@ census_any$specific_region <- factor(census_any$specific_region, levels = specif
 
 ##determine certain colors for each region so I only need to edit it here later
 color_pacific = "springgreen4"
-color_mountain = "#AFE1AF"
+color_mountain = "#93C572"
 color_wnc = "#FAC898"
 color_enc = "#FFA500"
 color_ne = '#D22B2B'
@@ -110,8 +112,6 @@ color_wsc ="#87CEEB"
 ##create a color palette for each of the specific census regions
 region_palette <- c("Pacific" = color_pacific, "Mountain" = color_mountain, "West North Central" = color_wnc, "East North Central" = color_enc, "New England" = color_ne, "Middle Atlantic" = color_ma, "South Atlantic" = color_sa, "East South Central" = color_esc, "West South Central" = color_wsc)
 ```
-
-## Map
 
 Read in Data and Prepare
 
@@ -128,7 +128,7 @@ states <- read_sf(here::here("data/states/US_State_Boundaries.shp")) %>%
 states <- st_transform(states, crs = 3857)
 
 ##make l ist of which abbreviations go with each census region
-west_list <- c("AK", "HI", "WA", "CA", "OR")
+pac_list <- c("AK", "HI", "WA", "CA", "OR")
 mountain_list <- c("MT", "ID", "WY", "NV", "UT", "CO", "AZ", "NM")
 wnc_list <- c("ND", "SD", "NE", "KS", "MN", "IA", "MO")
 enc_list <- c("WI", "IL", "IN", "MI", "OH")
@@ -141,7 +141,7 @@ s_atlantic_list <- c("DE", "DC", "MD", "NC", "VA", "WV", "GA", "FL", "SC")
 ##mutate so that the region goes with the appropriate states
 states <- states %>% 
 mutate(specific_region = case_when(
-    state_abbr %in% west_list ~ "Pacific",
+    state_abbr %in% pac_list ~ "Pacific",
     state_abbr %in% mountain_list ~ "Mountain",
     state_abbr %in% wnc_list ~ "West North Central",
     state_abbr %in% enc_list ~ "East North Central",
@@ -154,44 +154,69 @@ mutate(specific_region = case_when(
   )) %>% 
   filter(!state_abbr %in% c("HI","AK", "PR", "VI")) 
 
+
+west_sf <- states %>% 
+  filter(specific_region == "Pacific")
+
 ##prepare data for map -- each region and their number of homes
 n_homes_map <- census_nrg %>% 
   filter(indicator == "any_insecurity") %>% 
   select(specific_region, total_us)
 
 ##join the number of homes with the spatial data
-states <- left_join(states, n_homes_map, by = "specific_region")
+states <- left_join(states, n_homes_map, by = "specific_region") 
 
 
-##make label data frames that are just one state from each of the regions because I can't think of a better way to get them spatially specific right now
-west_lab <- states %>% 
-  filter(state_abbr == "CA")
-
-mount_lab <- states %>% 
-  filter(state_abbr == "WY")
-
-wnc_lab <- states %>% 
-  filter(state_abbr == "IA")
-
-enc_lab <- states %>% 
-  filter(state_abbr == "MI")
-
-ma_lab <- states %>% 
-  filter(state_abbr == "NY")
-
-ne_lab <- states %>% 
-  filter(state_abbr == "ME")
-
-sa_lab <- states %>% 
-  filter(state_abbr == "NC")
-
-esc_lab <- states %>% 
-  filter(state_abbr == "AL")
-
-wsc_lab <- states %>% 
-  filter(state_abbr == "TX")
+states <- states %>% 
+  mutate(total_us = paste(total_us, "Million"))
 
 ```
+
+Preparing labels. I'm going to get the centroid of each region so I can place labels. I'm also going to make a point slightly off from the first label so I can have 2!
+
+```{r}
+##set how much I'm going to offset one of the labels
+jitter_y <- 250000
+```
+
+Mountain region
+
+```{r}
+
+##MOUNTAIN 
+
+##filter the whole US by just the mountain region but exclude Alaska and Hawaii 
+mount_lab <- states %>% 
+  filter(state_abbr %in% mountain_list) 
+
+# create a new data frame for the merged geometry 
+merged_mount <- data.frame(specific_region = mount_lab$specific_region[1],
+                         total_us = mount_lab$total_us[1])
+
+## make a simple features object
+merged_mount_sf <- st_as_sf(merged_mount, geometry = st_union(mount_lab), crs = 3857)
+
+## Get the centroid for the # of homes
+mount_centroid_n <- merged_mount_sf %>% 
+  st_centroid(merged_mount_sf) 
+
+## get the coordinates to adjust the y one
+mount_cord <- st_coordinates(mount_centroid_n)
+
+## change the latitiude by the jitter amount
+mount_cord[2] = mount_cord[2] + jitter_y
+
+## make a new df with the appropriate lat and long
+merged_mount <- merged_mount %>% 
+  mutate("Lat" = mount_cord[1], "Long" = mount_cord[2])
+
+## get new sf 
+mount_centroid_name <- st_as_sf(merged_mount, coords = c("Lat", "Long"),crs = 3857)
+
+
+```
+
+And for West North Central
 
 Plot map
 
@@ -199,75 +224,40 @@ Plot map
 
 ##set a label size so it'll change for all of them
 size_label <- 5
+size_sub_label <- 4
+
 
 # plot map
 ggplot(states) +
   ##add states data and set the outline/"color" as black and the color inside as the specific region
   geom_sf(data = states, aes(fill = specific_region), color = "black", show.legend = FALSE) +
-  ##add each label and set its color and size/typeface specs, etc. 
-  geom_sf_label(data = west_lab, aes(label = specific_region, color=specific_region),
-                size = size_label, 
-                fontface = "bold", 
-                color = color_pacific, 
-                fill = "white",
-                hjust = 0.5,
-                show.legend = FALSE) +
-  geom_sf_label(data = west_lab, aes(label = specific_region, color=specific_region),
-                size = size_label, 
-                fontface = "bold", 
-                color = color_pacific, 
-                fill = "white",
-                hjust = 0.5,
-                show.legend = FALSE) +
-  geom_sf_label(data = mount_lab, aes(label = specific_region, color=specific_region),
-                size = size_label, 
-                fontface = "bold", 
-                color = color_mountain, 
-                fill = "white",
-                hjust = 1,
-                show.legend = FALSE) +
-   geom_sf_label(data = wnc_lab, aes(label = specific_region, color=specific_region),
-                size = size_label, 
-                fontface = "bold", 
-                color = color_wnc, 
-                fill = "white",
-                hjust = 0.9,
-                show.legend = FALSE) +
-     geom_sf_label(data = enc_lab, aes(label = specific_region, color=specific_region),
-                size = size_label, 
-                fontface = "bold", 
-                color = color_enc, 
+  ##PACIFIC
+      geom_sf_label(data = pac_centroid_name, aes(label = specific_region),
+                size = size_label,
+                fontface = "bold",
+                color = color_pacific,
                 fill = "white",
                 show.legend = FALSE) +
-   geom_sf_label(data = wsc_lab, aes(label = specific_region, color=specific_region),
-                size = size_label, 
-                fontface = "bold", 
-                color = color_wsc, 
+   geom_sf_label(data = pac_centroid_n, aes(label = total_us),
+                size = size_sub_label,
+                position = "jitter",
+                fontface = "bold",
+                color = color_pacific,
                 fill = "white",
                 show.legend = FALSE) +
-    geom_sf_label(data = sa_lab, aes(label = specific_region, color=specific_region),
-                size = size_label, 
-                hjust = -0.3,
-                fontface = "bold", 
-                color = color_sa, 
+
+  ##MOUNTAIN
+      geom_sf_label(data = mount_centroid_name, aes(label = specific_region),
+                size = size_label,
+                fontface = "bold",
+                color = color_mountain,
                 fill = "white",
                 show.legend = FALSE) +
-   geom_sf_label(data = esc_lab, aes(label = specific_region, color=specific_region),
-                size = size_label, 
-                fontface = "bold", 
-                color = color_esc, 
-                fill = "white",
-                show.legend = FALSE) +
-   geom_sf_label(data = ma_lab, aes(label = specific_region, color=specific_region),
-                size = size_label, 
-                fontface = "bold", 
-                color = color_ma, 
-                fill = "white",
-                show.legend = FALSE) +
-  geom_sf_label(data = ne_lab, aes(label = specific_region, color=specific_region),
-                size = size_label, 
-                fontface = "bold", 
-                color = color_ne, 
+   geom_sf_label(data = mount_centroid_n, aes(label = total_us),
+                size = size_sub_label,
+                position = "jitter",
+                fontface = "bold",
+                color = color_mountain,
                 fill = "white",
                 show.legend = FALSE) +
   labs(title = "Location of Each US Census Region")+ 
@@ -279,7 +269,8 @@ ggplot(states) +
                               size = 25,
                               hjust = 0.2)
      )
-
+  
+  
 
 ```
 
