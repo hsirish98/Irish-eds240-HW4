@@ -176,7 +176,7 @@ Preparing labels. I'm going to get the centroid of each region so I can place la
 
 ```{r}
 ##set how much I'm going to offset one of the labels
-jitter_y <- 250000
+jitter_y <- 200000
 ```
 
 Mountain region
@@ -218,6 +218,249 @@ mount_centroid_name <- st_as_sf(merged_mount, coords = c("Lat", "Long"),crs = 38
 
 And for West North Central
 
+```{r}
+
+##WEST NORTH CENTRAL 
+
+##filter the whole US by just the wnc region
+wnc_lab <- states %>% 
+  filter(state_abbr %in% wnc_list) 
+
+# create a new data frame for the merged geometry 
+merged_wnc <- data.frame(specific_region = wnc_lab$specific_region[1],
+                         total_us = wnc_lab$total_us[1])
+
+## make a simple features object
+merged_wnc_sf <- st_as_sf(merged_wnc, geometry = st_union(wnc_lab), crs = 3857)
+
+## Get the centroid for the # of homes
+wnc_centroid_n <- merged_wnc_sf %>% 
+  st_centroid(merged_wnc_sf) 
+
+## get the coordinates to adjust the y one
+wnc_cord <- st_coordinates(wnc_centroid_n)
+
+## change the latitiude by the jitter amount
+wnc_cord[2] = wnc_cord[2] + jitter_y
+
+## make a new df with the appropriate lat and long
+merged_wnc <- merged_wnc %>% 
+  mutate("Lat" = wnc_cord[1], "Long" = wnc_cord[2])
+
+## get new sf 
+wnc_centroid_name <- st_as_sf(merged_wnc, coords = c("Lat", "Long"),crs = 3857)
+
+
+
+```
+
+And for East North Central
+
+```{r}
+##EAST NORTH CENTRAL 
+
+##filter the whole US by just the wnc region
+enc_lab <- states %>% 
+  filter(state_abbr %in% enc_list) 
+
+# create a new data frame for the merged geometry 
+merged_enc <- data.frame(specific_region = enc_lab$specific_region[1],
+                         total_us = enc_lab$total_us[1])
+
+## make a simple features object
+merged_enc_sf <- st_as_sf(merged_enc, geometry = st_union(enc_lab), crs = 3857)
+
+## Get the centroid for the # of homes
+enc_centroid_n <- merged_enc_sf %>% 
+  st_centroid(merged_enc_sf) 
+
+## get the coordinates to adjust the y one
+enc_cord <- st_coordinates(enc_centroid_n)
+
+## change the latitiude by the jitter amount
+enc_cord[2] = enc_cord[2] + jitter_y
+
+## make a new df with the appropriate lat and long
+merged_enc <- merged_enc %>% 
+  mutate("Lat" = enc_cord[1], "Long" = enc_cord[2])
+
+## get new sf 
+enc_centroid_name <- st_as_sf(merged_enc, coords = c("Lat", "Long"),crs = 3857)
+
+```
+
+Middle atlantic
+
+```{r}
+##MID ATLANTIC
+
+##filter the whole US by just the wnc region
+ma_lab <- states %>% 
+  filter(state_abbr %in% mid_atlantic_list) 
+
+# create a new data frame for the merged geometry 
+merged_ma <- data.frame(specific_region = ma_lab$specific_region[1],
+                         total_us = ma_lab$total_us[1])
+
+## make a simple features object
+merged_ma_sf <- st_as_sf(merged_ma, geometry = st_union(ma_lab), crs = 3857)
+
+## Get the centroid for the # of homes
+ma_centroid_n <- merged_ma_sf %>% 
+  st_centroid(merged_ma_sf) 
+
+## get the coordinates to adjust the y one
+ma_cord <- st_coordinates(ma_centroid_n)
+
+## change the latitiude by the jitter amount
+ma_cord[2] = ma_cord[2] + jitter_y
+
+## make a new df with the appropriate lat and long
+merged_ma <- merged_ma %>% 
+  mutate("Lat" = ma_cord[1], "Long" = ma_cord[2])
+
+## get new sf 
+ma_centroid_name <- st_as_sf(merged_ma, coords = c("Lat", "Long"),crs = 3857)
+```
+
+New England
+
+```{r}
+##NEW ENGLAND
+
+##filter the whole US by just the wnc region
+ne_lab <- states %>% 
+  filter(state_abbr %in% new_england_list) 
+
+# create a new data frame for the merged geometry 
+merged_ne <- data.frame(specific_region = ne_lab$specific_region[1],
+                         total_us = ne_lab$total_us[1])
+
+## make a simple features object
+merged_ne_sf <- st_as_sf(merged_ne, geometry = st_union(ne_lab), crs = 3857)
+
+## Get the centroid for the # of homes
+ne_centroid_n <- merged_ne_sf %>% 
+  st_centroid(merged_ne_sf) 
+
+## get the coordinates to adjust the y one
+ne_cord <- st_coordinates(ne_centroid_n)
+
+## change the latitiude by the jitter amount
+ne_cord[2] = ne_cord[2] + jitter_y
+
+## make a new df with the appropriate lat and long
+merged_ne <- merged_ne %>% 
+  mutate("Lat" = ne_cord[1], "Long" = ne_cord[2])
+
+## get new sf 
+ne_centroid_name <- st_as_sf(merged_ne, coords = c("Lat", "Long"),crs = 3857)
+```
+
+West South Central
+
+```{r}
+##WEST SOUTH CENTRAL
+
+##filter the whole US by just the wsc region
+wsc_lab <- states %>% 
+  filter(state_abbr %in% wsc_list) 
+
+# create a new data frame for the merged geometry 
+merged_wsc <- data.frame(specific_region = wsc_lab$specific_region[1],
+                         total_us = wsc_lab$total_us[1])
+
+## make a simple features object
+merged_wsc_sf <- st_as_sf(merged_wsc, geometry = st_union(wsc_lab), crs = 3857)
+
+## Get the centroid for the # of homes
+wsc_centroid_n <- merged_wsc_sf %>% 
+  st_centroid(merged_wsc_sf) 
+
+## get the coordinates to adjust the y one
+wsc_cord <- st_coordinates(wsc_centroid_n)
+
+## change the latitiude by the jitter amount
+wsc_cord[2] = wsc_cord[2] + jitter_y
+
+## make a new df with the appropriate lat and long
+merged_wsc <- merged_wsc %>% 
+  mutate("Lat" = wsc_cord[1], "Long" = wsc_cord[2])
+
+## get new sf 
+wsc_centroid_name <- st_as_sf(merged_wsc, coords = c("Lat", "Long"),crs = 3857)
+```
+
+East South Central
+
+```{r}
+
+##EAST SOUTH CENTRAL
+
+##filter the whole US by just the wsc region
+esc_lab <- states %>% 
+  filter(state_abbr %in% esc_list) 
+
+# create a new data frame for the merged geometry 
+merged_esc <- data.frame(specific_region = esc_lab$specific_region[1],
+                         total_us = esc_lab$total_us[1])
+
+## make a simple features object
+merged_esc_sf <- st_as_sf(merged_esc, geometry = st_union(esc_lab), crs = 3857)
+
+## Get the centroid for the # of homes
+esc_centroid_n <- merged_esc_sf %>% 
+  st_centroid(merged_esc_sf) 
+
+## get the coordinates to adjust the y one
+esc_cord <- st_coordinates(esc_centroid_n)
+
+## change the latitiude by the jitter amount
+esc_cord[2] = esc_cord[2] + jitter_y
+
+## make a new df with the appropriate lat and long
+merged_esc <- merged_esc %>% 
+  mutate("Lat" = esc_cord[1], "Long" = esc_cord[2])
+
+## get new sf 
+esc_centroid_name <- st_as_sf(merged_esc, coords = c("Lat", "Long"),crs = 3857)
+```
+
+South Atlantic
+
+```{r}
+
+##South Atlantic
+
+##filter the whole US by just the sa region
+sa_lab <- states %>% 
+  filter(state_abbr %in% s_atlantic_list) 
+
+# create a new data frame for the merged geometry 
+merged_sa <- data.frame(specific_region = sa_lab$specific_region[1],
+                         total_us = sa_lab$total_us[1])
+
+## make a simple features object
+merged_sa_sf <- st_as_sf(merged_sa, geometry = st_union(sa_lab), crs = 3857)
+
+## Get the centroid for the # of homes
+sa_centroid_n <- merged_sa_sf %>% 
+  st_centroid(merged_sa_sf) 
+
+## get the coordinates to adjust the y one
+sa_cord <- st_coordinates(sa_centroid_n)
+
+## change the latitiude by the jitter amount
+sa_cord[2] = sa_cord[2] - jitter_y
+
+## make a new df with the appropriate lat and long
+merged_sa <- merged_sa %>% 
+  mutate("Lat" = sa_cord[1], "Long" = sa_cord[2])
+
+## get new sf 
+sa_centroid_name <- st_as_sf(merged_sa, coords = c("Lat", "Long"),crs = 3857)
+```
+
 Plot map
 
 ```{r}
@@ -230,7 +473,16 @@ size_sub_label <- 4
 # plot map
 ggplot(states) +
   ##add states data and set the outline/"color" as black and the color inside as the specific region
-  geom_sf(data = states, aes(fill = specific_region), color = "black", show.legend = FALSE) +
+  geom_sf(data = states, aes(fill = specific_region), color = "gray44",linetype = "dotted", show.legend = FALSE) +
+  geom_sf(data=merged_pac_sf, fill = "transparent", color = "black")+
+   geom_sf(data=merged_mount_sf, fill = "transparent", color = "black")+
+  geom_sf(data=merged_wnc_sf, fill = "transparent", color = "black")+
+  geom_sf(data=merged_enc_sf, fill = "transparent", color = "black")+
+  geom_sf(data=merged_ma_sf, fill = "transparent", color = "black")+
+  geom_sf(data=merged_ne_sf, fill = "transparent", color = "black")+
+  geom_sf(data=merged_wsc_sf, fill = "transparent", color = "black")+
+  geom_sf(data=merged_esc_sf, fill = "transparent", color = "black")+
+  geom_sf(data=merged_sa_sf, fill = "transparent", color = "black")+
   ##PACIFIC
       geom_sf_label(data = pac_centroid_name, aes(label = specific_region),
                 size = size_label,
@@ -260,35 +512,120 @@ ggplot(states) +
                 color = color_mountain,
                 fill = "white",
                 show.legend = FALSE) +
-  labs(title = "Location of Each US Census Region")+ 
+  ##WNC
+      geom_sf_label(data = wnc_centroid_name, aes(label = specific_region),
+                size = size_label,
+                fontface = "bold",
+                color = color_wnc,
+                fill = "white",
+                show.legend = FALSE) +
+   geom_sf_label(data = wnc_centroid_n, aes(label = total_us),
+                size = size_sub_label,
+                position = "jitter",
+                fontface = "bold",
+                color = color_wnc,
+                fill = "white",
+                show.legend = FALSE) +
+  ##ENC
+      geom_sf_label(data = enc_centroid_name, aes(label = specific_region),
+                size = size_label,
+                fontface = "bold",
+                color = color_enc,
+                fill = "white",
+                show.legend = FALSE) +
+   geom_sf_label(data = enc_centroid_n, aes(label = total_us),
+                size = size_sub_label,
+                position = "jitter",
+                fontface = "bold",
+                color = color_enc,
+                fill = "white",
+                show.legend = FALSE) +
+  ##New England
+      geom_sf_label(data = ne_centroid_name, aes(label = specific_region),
+                size = size_label,
+                fontface = "bold",
+                color = color_ne,
+                fill = "white",
+                show.legend = FALSE) +
+   geom_sf_label(data = ne_centroid_n, aes(label = total_us),
+                size = size_sub_label,
+                position = "jitter",
+                fontface = "bold",
+                color = color_ne,
+                fill = "white",
+                show.legend = FALSE) +
+  ##Mid Atlantic
+      geom_sf_label(data = ma_centroid_name, aes(label = specific_region),
+                size = size_label,
+                fontface = "bold",
+                color = color_ma,
+                fill = "white",
+                show.legend = FALSE) +
+   geom_sf_label(data = ma_centroid_n, aes(label = total_us),
+                size = size_sub_label,
+                position = "jitter",
+                fontface = "bold",
+                color = color_ma,
+                fill = "white",
+                show.legend = FALSE) +
+  ##West South Central
+      geom_sf_label(data = wsc_centroid_name, aes(label = specific_region),
+                size = size_label,
+                fontface = "bold",
+                color = color_wsc,
+                fill = "white",
+                show.legend = FALSE) +
+   geom_sf_label(data = wsc_centroid_n, aes(label = total_us),
+                size = size_sub_label,
+                position = "jitter",
+                fontface = "bold",
+                color = color_wsc,
+                fill = "white",
+                show.legend = FALSE) +
+  ##East South Central
+      geom_sf_label(data = esc_centroid_name, aes(label = specific_region),
+                size = size_label,
+                fontface = "bold",
+                color = color_esc,
+                fill = "white",
+                show.legend = FALSE) +
+   geom_sf_label(data = esc_centroid_n, aes(label = total_us),
+                size = size_sub_label,
+                position = "jitter",
+                fontface = "bold",
+                color = color_esc,
+                fill = "white",
+                show.legend = FALSE) +
+  ##South Atlantic
+      geom_sf_label(data = sa_centroid_name, aes(label = total_us),
+                size = size_sub_label,
+                fontface = "bold",
+                color = color_sa,
+                fill = "white",
+                show.legend = FALSE) +
+   geom_sf_label(data = sa_centroid_n, aes(label = specific_region),
+                size = size_label,
+                position = "jitter",
+                fontface = "bold",
+                color = color_sa,
+                fill = "white",
+                show.legend = FALSE) +
+  labs(title = "US Census Regions",
+       subtitle = "Location and Number of Homes")+ 
    scale_fill_manual(values = region_palette) +
    theme_void() +
   theme(
      plot.title = element_text(face="bold",
                               family = "inter",
                               size = 25,
-                              hjust = 0.2)
+                              hjust = 0.5),
+     plot.subtitle = element_text(
+                              family = "inter",
+                              size = 20,
+                              hjust = 0.5)
      )
   
   
-
-```
-
-Number of Homes Bar Plot
-
-```{r}
-
-##make bar plot of the total number of homes in each region and fill by the region color
-ggplot(data=census_any, aes(x=specific_region, y=total_us, fill=specific_region))+
-  geom_bar(stat="identity") +
-  scale_fill_manual(values = region_palette) +
-  coord_flip() +
-  theme_minimal() +
-  theme(
-    axis.title.x = element_blank(),
-    legend.position = "none"
-  )
-
 
 ```
 
@@ -335,14 +672,13 @@ ggplot(data=census_any, aes(x=specific_region, y=pct, fill=specific_region))+
   
   )  +
   ##add lines from the labels to the chart segments
-  geom_segment(aes(x = specific_region, y = pct, xend = specific_region, yend = pct+0.14), 
+  geom_segment(aes(x = specific_region, y = pct, xend = specific_region, yend = pct+0.08), 
                color = "black", size = 0.7)+
-  geom_label(data=census_any,
+  geom_text(data=census_any,
   aes(x = specific_region, y = pct, label = specific_region),
-  position = position_stack(vjust = 1.5), # Adjust 'vjust' for label positioning
+  position = position_stack(vjust = 1.55), # Adjust 'vjust' for label positioning
   size = 6,
-  fill = "grey50", # Dark gray background for the labels
-  colour = "white",
+  colour = "black",
   family="inter"# White text color
 ) +
   ##make a circle instead of traditional bar chart
