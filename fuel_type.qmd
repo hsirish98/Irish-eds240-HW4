@@ -15,7 +15,7 @@ library(gghighlight)
 library(showtext)
 
 ##Add typeface "Inter" from Google Fonts
-font_add_google(name = "Inter", family = "inter")
+font_add_google(name = "Montserrat", family = "inter")
 ##Add typeface "Barlow" from Google Fonts
 font_add_google(name = "Barlow", family="barlow")
 
@@ -66,11 +66,9 @@ sw_clean <- pivot_longer(south_west, cols = -fuel, names_to = "region", values_t
 
 all_reg_clean <- rbind(sw_clean, ne_mw_clean)
 
-spec_reg_only <- all_reg_clean[c(3:5,7, 10,13,14,16,17), ] 
+spec_reg_only <- all_reg_clean[c(2,6,12,15), ] 
 
-region_polished <- c("South Atlantic","East South Central", "West South Central","Mountain","Pacific","New England","Middle Atlantic","East North Central",  
-                      "West North Central"
-                      )
+region_polished <- c("South","West","Northeast","Midwest")
 
 spec_reg_only$region_polished <- region_polished
 
@@ -106,11 +104,8 @@ spec_reg_only <- spec_reg_only %>%
   arrange(rev(desc(pct))) %>%
   mutate(region = factor(region, levels = unique(region)))
 
-
-
-
 energy_bars <- ggplot(data = spec_reg_only, aes(x = reorder(region_polished, pct), y = pct)) +
-  ##first
+  #first
   geom_rect(
     xmin = xmin_start, xmax = xmax_start, ymin = ymin_tot,ymax = ymax_tot,
     alpha = alpha_tot,fill = bat_fill,col = bat_outline)+
@@ -126,80 +121,109 @@ energy_bars <- ggplot(data = spec_reg_only, aes(x = reorder(region_polished, pct
    geom_rect(
     xmin = xmin_start+3, xmax = xmax_start+3, ymin = ymin_tot,ymax = ymax_tot,
     alpha = alpha_tot,fill = bat_fill,col = bat_outline)+
-  ##fifth
-   geom_rect(
-    xmin = xmin_start+4, xmax = xmax_start+4, ymin = ymin_tot,ymax = ymax_tot,
-    alpha = alpha_tot,fill = bat_fill,col = bat_outline)+
-  ##six
-   geom_rect(
-    xmin = xmin_start+5, xmax = xmax_start+5, ymin = ymin_tot,ymax = ymax_tot,
-    alpha = alpha_tot,fill = bat_fill,col = bat_outline)+
-  ##7
-   geom_rect(
-    xmin = xmin_start+6, xmax = xmax_start+6, ymin = ymin_tot,ymax = ymax_tot,
-    alpha = alpha_tot,fill = bat_fill,col = bat_outline)+
-  ##8
-   geom_rect(
-    xmin = xmin_start+7, xmax = xmax_start+7, ymin = ymin_tot,ymax = ymax_tot,
-    alpha = alpha_tot,fill = bat_fill,col = bat_outline)+
-  ##9
-   geom_rect(
-    xmin = xmin_start+8, xmax = xmax_start+8, ymin = ymin_tot,ymax = ymax_tot,
-    alpha = alpha_tot,fill = bat_fill,col = bat_outline)+
+  # ##fifth
+  # geom_rect(
+  #   xmin = xmin_start+4, xmax = xmax_start+4, ymin = ymin_tot,ymax = ymax_tot,
+  #   alpha = alpha_tot,fill = "white",col = "white")+
+  # #six
+  #  geom_rect(
+  #   xmin = xmin_start+5, xmax = xmax_start+5, ymin = ymin_tot,ymax = ymax_tot,
+  #   alpha = alpha_tot,fill = bat_fill,col = bat_outline)+
+  # ##7
+  #  geom_rect(
+  #   xmin = xmin_start+6, xmax = xmax_start+6, ymin = ymin_tot,ymax = ymax_tot,
+  #   alpha = alpha_tot,fill = bat_fill,col = bat_outline)+
+  # ##8
+  #  geom_rect(
+  #   xmin = xmin_start+7, xmax = xmax_start+7, ymin = ymin_tot,ymax = ymax_tot,
+  #   alpha = alpha_tot,fill = bat_fill,col = bat_outline)+
+  # ##9
+  #  geom_rect(
+  #   xmin = xmin_start+8, xmax = xmax_start+8, ymin = ymin_tot,ymax = ymax_tot,
+  #   alpha = alpha_tot,fill = bat_fill,col = bat_outline)+
   
   geom_rect(xmin=xmin_top, xmax =xmax_top, ymin=1, ymax=ymax_top)+
    geom_rect(xmin=xmin_top+1, xmax =xmax_top+1, ymin=1, ymax=ymax_top)+
    geom_rect(xmin=xmin_top+2, xmax =xmax_top+2, ymin=1, ymax=ymax_top)+
    geom_rect(xmin=xmin_top+3, xmax =xmax_top+3, ymin=1, ymax=ymax_top)+
-   geom_rect(xmin=xmin_top+4, xmax =xmax_top+4, ymin=1, ymax=ymax_top)+
-   geom_rect(xmin=xmin_top+5, xmax =xmax_top+5, ymin=1, ymax=ymax_top)+
-   geom_rect(xmin=xmin_top+6, xmax =xmax_top+6, ymin=1, ymax=ymax_top)+
-   geom_rect(xmin=xmin_top+7, xmax =xmax_top+7, ymin=1, ymax=ymax_top)+
-    geom_rect(xmin=xmin_top+8, xmax =xmax_top+8, ymin=1, ymax=ymax_top)+
-  
+   # geom_rect(xmin=xmin_top+4, xmax =xmax_top+4, ymin=1, ymax=ymax_top)+
+   # geom_rect(xmin=xmin_top+5, xmax =xmax_top+5, ymin=1, ymax=ymax_top)+
+   # geom_rect(xmin=xmin_top+6, xmax =xmax_top+6, ymin=1, ymax=ymax_top)+
+   # geom_rect(xmin=xmin_top+7, xmax =xmax_top+7, ymin=1, ymax=ymax_top)+
+   #  geom_rect(xmin=xmin_top+8, xmax =xmax_top+8, ymin=1, ymax=ymax_top)+
+
     geom_col(fill="green3", width = 0.75) +
     labs(title = "Percent of Homes Powered by Natural Gas",
-         subtitle= "Percent of homes in each home that supplements electricity usage \n with natural gas, compared to the national average") +
+         subtitle= "Percent of homes in each general region that supplement electricity usage \n with natural gas, compared to the national average") +
  geom_hline(yintercept=national_average)+
   geom_text(aes(label=scales::percent(pct, accuracy = 1)),
-            y=0.9,
-            size = 6, 
+            y=0.88,
+            size = 10, 
             color="black")+
   ylim(0,1.2)+
   
-   annotate(geom="text", x=9.2 ,
-            y=national_average-0.25, 
+   annotate(geom="text", x=5 ,
+            y=national_average-0.3, 
            label="National Average",
-           size =5,
+           size =8,
+              color="transparent")+
+   annotate(geom="text", x=4.7 ,
+            y=national_average-0.35, 
+           label="National Average",
+           size =12,
               color="black")+
-  geom_segment(aes(x = 9.0, y = national_average-0.2, xend = 8.8, yend = national_average), 
+  geom_segment(aes(x = 4.4, y = national_average-0.2, xend = 4.2, yend = national_average), 
                  arrow = arrow(type = "closed", length = unit(0.05, "inches")),
                  color = "black")+
   theme_minimal() +
   theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
         axis.title = element_blank(),
         axis.text.x = element_blank(),
         axis.text.y = element_text(
           hjust=0.5,
           family = "inter",
           face="bold",
-          size=15
+          size=25
           ),
           plot.title = element_text(
               face="bold",
                family = "inter",
-                size = 25,
-                 hjust = 0.5,
-              margin=margin(0.5,0.5,0.5,0.5, unit="cm")),
+                size = 40,
+                 hjust = 0.5),
           plot.subtitle = element_text(
                family = "inter",
-                size = 20,
-                 hjust = 0.5),
-      aspect.ratio = 0.9
+                size = 30,
+                 hjust = 0.5,
+               lineheight = 0.5,
+               margin = margin(b = 10, unit = "pt")
+               ),
+      # margin=margin(1,1,1,1, unit="cm"),
+      plot.background = element_rect(fill = "transparent", color = "transparent"), # make plot background transparent
+        panel.background = element_rect(fill = "transparent", color ="transparent"),
+      
         )+
     
   coord_flip()
 
+energy_bars
 
-ggsave(here::here("data_intermediate/energybars.png"), energy_bars, bg = "transparent")
+ggsave(here::here("images/energybars.png"), plot = energy_bars, width = 6, height = 4, dpi = 300)
+```
+
+```{r}
+
+
+color_pacific = "springgreen4"
+color_mountain = "#93C572"
+color_wnc = "#FAC898"
+color_enc = "#FFA500"
+color_ne = '#D22B2B'
+color_ma = "#FAA0A0"
+color_sa = "#0F52BA"
+color_esc = "#6495ED"
+color_wsc ="#87CEEB"
+
+##create a color palette for each of the specific census regions
+region_palette <- c("Pacific" = color_pacific, "Mountain" = color_mountain, "West North Central" = color_wnc, "East North Central" = color_enc, "New England" = color_ne, "Middle Atlantic" = color_ma, "South Atlantic" = color_sa, "East South Central" = color_esc, "West South Central" = color_wsc)
 ```
